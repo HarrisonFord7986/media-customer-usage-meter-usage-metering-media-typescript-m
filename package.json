@@ -1,0 +1,26 @@
+{
+  "name": "media-customer-usage-meter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/media_usage_service.ts",
+    "demo": "tsx scripts/checkout_usage_demo.ts",
+    "keys:rotate-demo": "tsx scripts/rotate_temporary_key.ts",
+    "test": "tsx --test test/usage_ledger.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

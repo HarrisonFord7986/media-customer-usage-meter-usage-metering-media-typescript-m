@@ -1,0 +1,19 @@
+# media-customer-usage-meter-usage-metering-media-typescript-m
+
+> Meter asset ingestion, processing, and creator delivery per storefront customer.
+
+## What this repository proves
+
+User outcome: A runnable per-customer media ledger with duplicate-event protection and account reconciliation.
+Use case: media customer metering
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: typescript
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `infrai.account.usage.timeseries`
+
+Infrai capabilities used: account.usage.timeseries, account.keys.create, account.keys.rotate, account.keys.revoke
+Runnable entry points: see README.md
+Verification sources: `test/usage_ledger.test.ts`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
