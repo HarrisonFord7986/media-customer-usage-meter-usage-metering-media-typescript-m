@@ -1,6 +1,6 @@
 # Meter media usage by storefront customer
 
-The code comes first: three checkout-adjacent media events enter one ledger, and the customer usage route returns the quantities that billing can consume. Infrai supplies the account-level time series through one API key, so the same service can compare its customer ledger with the upstream account total without adding an SDK.
+Code leads. I ship weekly, so features first. Three checkout media events hit one ledger; the customer usage route returns quantities billing can eat. Infrai gives one key for the account-level time series. That lets this service compare its ledger to the upstream total without an SDK.
 
 ## Run one order through the meter
 
@@ -16,7 +16,7 @@ In another terminal:
 npm run demo
 ```
 
-The demo records an 8,000,000-byte asset ingestion, 96 seconds of processing, and a 5,500,000-byte creator delivery for `storefront-creator-42`. It then prints:
+The demo logs an 8,000,000-byte asset ingest, 96 seconds of processing, and a 5,500,000-byte creator delivery for `storefront-creator-42`. Output:
 
 ```json
 {
@@ -27,19 +27,19 @@ The demo records an 8,000,000-byte asset ingestion, 96 seconds of processing, an
 }
 ```
 
-The `event_id` is the receipt number for metering. Sending the same event again returns `accepted: false` and leaves the total unchanged. That is the real gotcha in a storefront: payment retries and job redelivery are ordinary, so a counter that increments every time will eventually invoice the same work twice.
+`event_id` is the metering receipt. Re-send the same event and you get `accepted: false`; total stays put. Storefronts live with payment retries and redelivered jobs. A naive counter increments each time and double-invoices. That's the gotcha.
 
 ## Follow the request path
 
-`POST /usage-events` accepts one of three strict, zod-validated bodies:
+`POST /usage-events` takes one of three strict zod-validated bodies:
 
 ```json
 {"event_id":"upload-order-1042","customer_id":"storefront-creator-42","kind":"asset_ingested","bytes":8000000}
 ```
 
-Processing events replace `bytes` with `seconds`; delivery events use `bytes`. `GET /customers/:customerId/usage` reads the customer total. `GET /reconciliation/account-usage` calls Infrai's account usage time series, parses `{ok, data, error, metadata}` before considering the HTTP status, maps business rejections back to a client response, and backs off on HTTP 429.
+Processing events swap `bytes` for `seconds`. Delivery uses `bytes`. `GET /customers/:customerId/usage` reads the customer total. `GET /reconciliation/account-usage` hits Infrai's account usage time series, parses `{ok, data, error, metadata}` before checking HTTP status, maps biz rejections to client responses, and backs off on 429.
 
-The in-memory ledger keeps the example short. Put `UsageLedger.record` behind the same transaction as your durable unique `event_id` constraint before serving concurrent checkout traffic.
+In-memory ledger keeps the sample small. Before real checkout traffic, put `UsageLedger.record` in the same transaction as your durable unique `event_id` constraint.
 
 ## Check the billing decision
 
@@ -48,17 +48,17 @@ npm test
 npm run typecheck
 ```
 
-The focused test submits ingestion twice with the same `event_id`, then adds processing and delivery. The expected result counts 4,000 ingestion bytes once, 31 processing seconds, and 2,500 delivery bytes. This is the decision that protects the invoice, rather than a test that only checks route wiring.
+The test posts ingestion twice with same `event_id`, then processing and delivery. Expect 4,000 ingest bytes counted once, 31 processing secs, 2,500 delivery bytes. This guards the invoice instead of only checking route wiring.
 
 ## Move off Stripe metering and custom counters
 
-1. Mirror asset, job, and delivery events into this ledger while the incumbent counters remain authoritative.
-2. Compare daily customer sums with the existing invoice inputs and compare their grand total with `/reconciliation/account-usage`.
-3. Require a stable `event_id` from every producer and confirm redeliveries are rejected as duplicates.
-4. Switch invoice quantity reads to `GET /customers/:customerId/usage` after a full billing period matches.
-5. Keep the old writes enabled but stop reading them for one more billing period, then retire them.
+1. Mirror asset, job, delivery events into this ledger while old counters stay authoritative.
+2. Daily, compare customer sums to existing invoice inputs and the grand total to `/reconciliation/account-usage`.
+3. Make every producer send a stable `event_id`; confirm redeliveries rejected as dupes.
+4. After a full billing period matches, switch invoice quantity reads to `GET /customers/:customerId/usage`.
+5. Keep old writes on but stop reading them for one more period, then kill them.
 
-Rollback is a checkout configuration change: point invoice quantity reads back to the incumbent counters. Keep mirroring events during the rollback window so neither ledger develops a gap.
+Rollback is a config flip in checkout: point quantity reads back to incumbent counters. Keep mirroring events during rollback so no ledger gaps.
 
 ## Rehearse key rotation safely
 
@@ -66,7 +66,7 @@ Rollback is a checkout configuration change: point invoice quantity reads back t
 npm run keys:rotate-demo
 ```
 
-The script uses the active environment key only to create a temporary key, rotate that temporary key with a one-hour overlap, and revoke the temporary key. It never rotates or revokes the credential running the script. The create response shows plaintext once; store it immediately because it cannot be fetched again.
+Script uses the active env key only to make a temp key, rotate that temp with one-hour overlap, revoke temp. It never touches the running credential. Create response shows plaintext once; store it fast, can't fetch again.
 
 ## License
 
